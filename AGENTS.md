@@ -103,6 +103,10 @@ The execution host owns agent status in one store, the hook server's, and every 
 
 A rule that reads what an agent CLI paints on a terminal — readiness, blocked prompts, idle — must be written against a captured transcript, not a remembered screen. Record one with [`docs/reference/agent-pty-transcript-capture.md`](./docs/reference/agent-pty-transcript-capture.md), which keeps escapes and wrapping intact and scrubs account identifiers before they reach git. Antigravity readiness has no transcript yet and five failed attempts without one; before touching it, read [`docs/reference/antigravity-readiness-evidence.md`](./docs/reference/antigravity-readiness-evidence.md).
 
+## Independent Review Loop
+
+`orca review-loop` hands a pushed branch to an independent reviewer through PR comments and resumes the agent through an Orca automation precheck. Before changing its verdict contract, state file, or resume semantics, read [`docs/reference/independent-review-loop.md`](./docs/reference/independent-review-loop.md): only a `GPT_REVIEW_V1` block whose `run_id` and full `head_sha` match counts, and the loop never merges or force-pushes.
+
 ## Remote Wire Compatibility
 
 Clients and remote Orca servers update independently, so mixed versions are the normal state. Before changing anything a paired client and host exchange — RPC params, stream frames, or the content either side publishes over them — follow [`docs/reference/remote-wire-compatibility.md`](./docs/reference/remote-wire-compatibility.md). A new optional field is safe; a new stream opcode must be capability-negotiated because decoders drop unknown opcodes silently; and changing what the host publishes reaches old clients even with no wire change.
