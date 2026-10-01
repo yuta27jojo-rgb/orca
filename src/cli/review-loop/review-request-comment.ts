@@ -1,3 +1,4 @@
+import { REVIEW_POLICY_LINES } from './review-policy'
 import {
   REVIEW_REQUEST_HTML_MARKER,
   REVIEW_REQUEST_MARKER,
@@ -39,6 +40,7 @@ export function buildReviewRequestComment(input: ReviewRequestCommentInput): str
     `Review this pull request at exactly commit \`${input.headSha}\`: the diff, changed files, CI / GitHub Actions results, unresolved review threads, regressions, correctness, security, reliability and tests.`,
     '',
     ...visibilitySection(input),
+    ...REVIEW_POLICY_LINES,
     ...previousFindingsSection(input.previousBlockingFindings),
     'Reply with one PR comment that contains exactly this block. Keep `run_id`, use the full 40-character `head_sha` you reviewed, choose one verdict, and write `- none` for an empty section:',
     '',

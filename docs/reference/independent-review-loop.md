@@ -65,6 +65,17 @@ A comment counts only when all of these hold; otherwise it is recorded and ignor
 
 The loop's own request comments carry a hidden marker and are never read as verdicts.
 
+## Review policy sent to the reviewer
+
+Every request comment carries a review policy (`src/cli/review-loop/review-policy.ts`) so the
+reviewer judges against the current Definition of Done instead of chasing zero findings:
+Critical and High are blocking; Medium blocks only if it prevents the Definition of Done, a major
+use case, safe operation, or causes a material regression; Low is non-blocking backlog.
+Speculative edge cases, future hardening, style, broad refactors and exhaustive-test goals never
+justify NEEDS_FIX, and the reviewer must not widen the scope. PASS may list non-blocking findings.
+It is an instruction to the reviewer only: Orca does not classify severity and reads the same
+`GPT_REVIEW_V1` sections as before.
+
 ## State
 
 Runs are JSON files under `<git common dir>/orca-review-loop/runs/<run_id>.json`, shared by
