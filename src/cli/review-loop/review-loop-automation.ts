@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs'
+import { join } from 'node:path'
 import { defaultExec, type ReviewLoopExec } from './review-loop-github'
 import { ReviewLoopError } from './review-loop-types'
 
@@ -61,16 +63,58 @@ export function buildPrecheckCommand(
   )
 }
 
-/** Command the resumed agent types; packaged builds are on PATH as `orca` inside Orca terminals. */
+const UNQUOTED_ARGUMENT = /^[A-Za-z0-9._:/@=-]+$/
+
+/**
+ * Command the resumed agent types. It never contains a quote: the prompt travels through the
+ * agent's own argv, where `"` inside a Windows path cut the command at `C:\Program` in the pilot.
+ * A program on PATH is addressed by its bare name and paths use `/`, which every Windows shell accepts.
+ */
 export function buildAgentCommand(
   invocation: CliInvocation,
   args: string[],
-  platform: NodeJS.Platform = process.platform
+  platform: NodeJS.Platform = process.platform,
+  resolvesOnPath: (program: string) => boolean = nodeOnPath
 ): string {
-  if (invocation.electron) {
-    return ['orca', ...args].map((part) => quoteForShell(part, platform)).join(' ')
+  const normalized = args.map((arg) => agentPath(arg, platform))
+  const parts = invocation.electron
+    ? ['orca', ...normalized]
+    : [
+        agentProgram(invocation.program, platform, resolvesOnPath),
+        agentPath(invocation.scriptPath, platform),
+        ...normalized
+      ]
+  if (parts.every((part) => UNQUOTED_ARGUMENT.test(part))) {
+    return parts.join(' ')
   }
-  return cliCommandLine(invocation, args, platform)
+  // Anything left needs quoting. Quoted forms stay valid for the agent's shell, but are not prompt-safe.
+  return parts.map((part) => quoteForShell(part, platform)).join(' ')
+}
+
+function agentProgram(
+  program: string,
+  platform: NodeJS.Platform,
+  resolvesOnPath: (program: string) => boolean
+): string {
+  const name =
+    program
+      .split(/[\\/]/)
+      .pop()
+      ?.replace(/\.exe$/i, '') ?? program
+  return name === 'node' && resolvesOnPath('node') ? 'node' : agentPath(program, platform)
+}
+
+function agentPath(path: string, platform: NodeJS.Platform): string {
+  return platform === 'win32' ? path.replaceAll('\\', '/') : path
+}
+
+function nodeOnPath(program: string): boolean {
+  const separator = process.platform === 'win32' ? ';' : ':'
+  const extensions = process.platform === 'win32' ? ['.exe', '.cmd', '.bat', ''] : ['']
+  return (process.env.PATH ?? '')
+    .split(separator)
+    .filter((dir) => dir.length > 0)
+    .some((dir) => extensions.some((extension) => existsSync(join(dir, `${program}${extension}`))))
 }
 
 export function buildResumePrompt(input: {

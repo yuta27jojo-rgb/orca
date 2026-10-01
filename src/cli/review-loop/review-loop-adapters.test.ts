@@ -125,6 +125,33 @@ describe('automation commands', () => {
     )
   })
 
+  it('never puts a quote in the agent command when node is on PATH, even for a spaced Windows path', () => {
+    const spaced: CliInvocation = {
+      program: String.raw`C:\Program Files\nodejs\node.exe`,
+      scriptPath: String.raw`D:\orca\out\cli\index.js`,
+      electron: false
+    }
+    const command = buildAgentCommand(
+      spaced,
+      ['review-loop', 'next', 'rl-1', '--worktree', String.raw`D:\orca`],
+      'win32',
+      () => true
+    )
+    expect(command).toBe('node D:/orca/out/cli/index.js review-loop next rl-1 --worktree D:/orca')
+    expect(command).not.toMatch(/["'`]/)
+  })
+
+  it('falls back to a quoted command only when nothing else can address the program', () => {
+    const spaced: CliInvocation = {
+      program: String.raw`C:\Program Files\nodejs\node.exe`,
+      scriptPath: String.raw`D:\orca\out\cli\index.js`,
+      electron: false
+    }
+    expect(buildAgentCommand(spaced, ['review-loop', 'next', 'rl-1'], 'win32', () => false)).toBe(
+      '"C:/Program Files/nodejs/node.exe" D:/orca/out/cli/index.js review-loop next rl-1'
+    )
+  })
+
   it('creates the automation through the public CLI and reads its id', async () => {
     const calls: string[][] = []
     const exec: ReviewLoopExec = async (_program, args) => {
