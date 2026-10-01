@@ -52,6 +52,24 @@ describe('gh adapter', () => {
     ])
   })
 
+  it('reuses only a same-repository PR, never one from a fork with the same branch name', async () => {
+    const row = (number: number, cross: boolean): Record<string, unknown> => ({
+      number,
+      url: `https://github.com/me/repo/pull/${number}`,
+      state: 'OPEN',
+      headRefOid: 'a'.repeat(40),
+      headRefName: 'feat/x',
+      baseRefName: 'main',
+      isCrossRepository: cross
+    })
+    const github = createGhReviewLoopGitHub(async () =>
+      ok(JSON.stringify([row(5, true), row(6, false)]))
+    )
+    expect((await github.findOpenPr('me/repo', 'feat/x'))?.number).toBe(6)
+    const onlyFork = createGhReviewLoopGitHub(async () => ok(JSON.stringify([row(5, true)])))
+    expect(await onlyFork.findOpenPr('me/repo', 'feat/x')).toBeNull()
+  })
+
   it('classifies network, auth and other gh failures', () => {
     expect(
       classifyGhFailure(

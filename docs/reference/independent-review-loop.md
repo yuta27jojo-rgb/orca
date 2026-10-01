@@ -101,6 +101,12 @@ of the author's worktree, and `--local-artifact <path>` declares critical local-
   comment came from the reviewer; use `--trusted-app` when the reviewer posts via a GitHub App.
 - The first resume launches a fresh agent session in the workspace; later events reuse it while
   it is idle. Desktop Orca must have a window open for automations to dispatch.
+- The agent's resume command is quote-free (bare `node` plus `/` paths) because the prompt travels
+  through the agent's argv. If `node` is not on PATH and its path contains spaces, the fallback is a
+  quoted command that PowerShell will not run without `&`; put `node` on PATH.
+- Reviewer provenance: when the agent's `gh` account and the reviewer's GitHub account are the
+  same, the comment author alone cannot prove the verdict came from the independent reviewer.
+  `--trusted-app` narrows trust to a GitHub App; stronger provenance is future hardening.
 - `next` acknowledges the pending event; use `status` to inspect a run without acknowledging it.
 - An interrupted `submit` (for example GitHub down while posting the request) is resumed by
   running `submit` again or by the next tick.

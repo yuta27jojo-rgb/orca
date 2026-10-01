@@ -31,7 +31,7 @@ export type ReviewLoopGitHub = {
   postComment(slug: string, prNumber: number, body: string): Promise<{ id: number; url: string }>
 }
 
-const PR_FIELDS = 'number,url,state,headRefOid,headRefName,baseRefName'
+const PR_FIELDS = 'number,url,state,headRefOid,headRefName,baseRefName,isCrossRepository'
 const ITEM_JQ =
   '.[] | {id, login: .user.login, app: .performed_via_github_app.slug, body: (.body // ""), created_at: (.created_at // .submitted_at), updated_at: (.updated_at // .submitted_at)}'
 
@@ -75,7 +75,9 @@ export function createGhReviewLoopGitHub(exec: ReviewLoopExec = defaultExec): Re
         PR_FIELDS
       ])
       const rows = parseJsonArray(stdout)
-      return rows.length > 0 ? toPullRequest(rows[0]) : null
+      // The loop pushes to the destination repo itself, so a same-named branch from another fork is a different PR.
+      const own = rows.find((row) => row.isCrossRepository !== true)
+      return own ? toPullRequest(own) : null
     },
     createPr: async (slug, input) => {
       await gh(
