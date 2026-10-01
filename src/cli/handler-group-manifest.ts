@@ -249,6 +249,20 @@ export const HANDLER_GROUPS: readonly HandlerGroup[] = [
     load: async () => (await import('./handlers/vm.js')).VM_HANDLERS
   },
   {
+    name: 'review-loop',
+    keys: [
+      'review-loop start',
+      'review-loop submit',
+      'review-loop tick',
+      'review-loop wait',
+      'review-loop next',
+      'review-loop status',
+      'review-loop list',
+      'review-loop stop'
+    ],
+    load: async () => (await import('./handlers/review-loop.js')).REVIEW_LOOP_HANDLERS
+  },
+  {
     name: 'skill-sharing',
     keys: ['skills installed', 'skills share'],
     load: async () => (await import('./handlers/skill-sharing.js')).SKILL_SHARING_HANDLERS
